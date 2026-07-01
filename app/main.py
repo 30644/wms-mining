@@ -205,3 +205,10 @@ if __name__ == "__main__":
     # 请使用 python -m uvicorn app.main:app --host 0.0.0.0 --port 8765 启动
     # 或双击运行 start.bat
     uvicorn.run(app, host="0.0.0.0", port=8766, reload=True)
+# ====== Serve Frontend Static Files ======
+from fastapi.staticfiles import StaticFiles
+import os
+
+static_dir = os.path.join(os.path.dirname(__file__), "..", "static")
+if os.path.exists(static_dir):
+    app.mount("/", StaticFiles(directory=static_dir, html=True), name="static")
