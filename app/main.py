@@ -158,16 +158,6 @@ except Exception as e:
     logger.warning(f"数据库迁移检查异常（可忽略）: {str(e)}")
 
 
-@app.get("/", summary="健康检查")
-async def read_root():
-    """
-    应用根路由 - 健康检查
-    """
-    return {
-        "message": "欢迎使用大红柳滩矿区智能仓储管理系统",
-        "status": "运行中"
-    }
-
 
 @app.on_event("startup")
 async def startup_event():
