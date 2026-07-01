@@ -204,11 +204,25 @@ if __name__ == "__main__":
     # 注意：Windows 下 reload=True 会导致 python -m app.main 启动后端口不监听
     # 请使用 python -m uvicorn app.main:app --host 0.0.0.0 --port 8765 启动
     # 或双击运行 start.bat
-    uvicorn.run(app, host="0.0.0.0", port=8766, reload=True)
+
 # ====== Serve Frontend Static Files ======
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 import os
 
 static_dir = os.path.join(os.path.dirname(__file__), "..", "static")
 if os.path.exists(static_dir):
-    app.mount("/", StaticFiles(directory=static_dir, html=True), name="static")
+    for sub in ["js", "css", "img", "fonts", "favicon.ico"]:
+        sub_path = os.path.join(static_dir, sub)
+        if os.path.exists(sub_path):
+            app.mount(f"/{sub}", StaticFiles(directory=sub_path), name=f"static_{sub}")
+
+    @app.get("/{full_path:path}", include_in_schema=False)
+    async def serve_spa(full_path: str):
+        if full_path.startswith("api/"):
+            from fastapi import HTTPException
+            raise HTTPException(status_code=404)
+        file_path = os.path.join(static_dir, full_path)
+        if os.path.isfile(file_path):
+            return FileResponse(file_path)
+        return FileResponse(os.path.join(static_dir, "index.html"))
