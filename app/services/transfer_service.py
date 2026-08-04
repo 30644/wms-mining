@@ -174,6 +174,22 @@ class TransferService:
         return True, '调拨单提交成功，等待库管审批'
 
     @staticmethod
+    def reject_transfer_order(order_id: int, comment: str, db: Session) -> Tuple[bool, str]:
+        order = db.query(TransferOrder).filter(TransferOrder.id == order_id).first()
+        if not order:
+            return False, '调拨单不存在'
+        if order.status != 'pending_approval':
+            return False, '调拨单状态不允许驳回'
+        order.status = 'rejected'
+        if comment:
+            existing_remark = order.remark or ''
+            order.remark = f"{existing_remark}\n[驳回原因]: {comment}" if existing_remark else f"[驳回原因]: {comment}"
+        order.updated_at = beijing_now()
+        db.commit()
+        logger.info(f"调拨单 {order.transfer_no} 已驳回，原因: {comment}")
+        return True, '调拨单已驳回'
+
+    @staticmethod
     def execute_transfer_order(order_id: int, db: Session) -> Tuple[bool, str]:
         order = db.query(TransferOrder).filter(TransferOrder.id == order_id).first()
         if not order:

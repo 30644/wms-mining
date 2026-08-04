@@ -403,8 +403,7 @@ async def approval_approve(
             if action == 'approve':
                 success, msg = TransferService.approve_transfer_order(biz_id, db)
             elif action == 'reject':
-                # reject not implemented for transfer yet
-                raise HTTPException(status_code=400, detail='调拨单暂不支持驳回')
+                success, msg = TransferService.reject_transfer_order(biz_id, request.comment, db)
             else:
                 raise HTTPException(status_code=400, detail=f'无效的审批动作: {action}')
             if not success:
@@ -415,7 +414,7 @@ async def approval_approve(
             if action == 'approve':
                 success, msg = ScrapService.approve_scrap_order(biz_id, db)
             elif action == 'reject':
-                raise HTTPException(status_code=400, detail='报废单暂不支持驳回')
+                success, msg = ScrapService.reject_scrap_order(biz_id, request.comment, db)
             else:
                 raise HTTPException(status_code=400, detail=f'无效的审批动作: {action}')
             if not success:
@@ -426,7 +425,7 @@ async def approval_approve(
             if action == 'approve':
                 success, msg = ReturnService.approve_return_order(biz_id, db)
             elif action == 'reject':
-                raise HTTPException(status_code=400, detail='退货单暂不支持驳回')
+                success, msg = ReturnService.reject_return_order(biz_id, request.comment, db)
             else:
                 raise HTTPException(status_code=400, detail=f'无效的审批动作: {action}')
             if not success:

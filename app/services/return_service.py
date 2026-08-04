@@ -175,6 +175,22 @@ class ReturnService:
         return True, '退货单提交成功'
 
     @staticmethod
+    def reject_return_order(order_id: int, comment: str, db: Session) -> Tuple[bool, str]:
+        order = db.query(ReturnOrder).filter(ReturnOrder.id == order_id).first()
+        if not order:
+            return False, '退货单不存在'
+        if order.status != 'pending_approval':
+            return False, '退货单状态不允许驳回'
+        order.status = 'rejected'
+        if comment:
+            existing_remark = order.remark or ''
+            order.remark = f"{existing_remark}\n[驳回原因]: {comment}" if existing_remark else f"[驳回原因]: {comment}"
+        order.updated_at = beijing_now()
+        db.commit()
+        logger.info(f"退货单 {order.return_no} 已驳回，原因: {comment}")
+        return True, '退货单已驳回'
+
+    @staticmethod
     def execute_return_order(order_id: int, db: Session) -> Tuple[bool, str]:
         order = db.query(ReturnOrder).filter(ReturnOrder.id == order_id).first()
         if not order:
