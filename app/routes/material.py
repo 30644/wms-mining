@@ -280,6 +280,7 @@ async def ai_search_materials(
             raise HTTPException(status_code=400, detail="请输入搜索关键词")
 
         # AI扩展同义词
+        AISearchService.last_error = ""
         terms = AISearchService.expand_search_query(keyword)
 
         # 搜索所有相关物料
@@ -307,10 +308,15 @@ async def ai_search_materials(
                     materials.append(m)
                 AISearchService.cache_aliases(m["id"], term, db)
 
+        # AI 服务失败提示（语义拓展失败，仍返回基础搜索）
+        ai_warning = ""
+        if AISearchService.last_error and terms == [keyword]:
+            ai_warning = f"AI语义拓展失败：{AISearchService.last_error}"
+
         return APIResponse(
             code=0,
-            message=f"AI搜索完成，共找到{len(materials)}个物料",
-            data={"list": materials, "total": len(materials), "ai_expanded": terms}
+            message=ai_warning or f"AI搜索完成，共找到{len(materials)}个物料",
+            data={"list": materials, "total": len(materials), "ai_expanded": terms, "ai_warning": ai_warning}
         )
     except HTTPException:
         raise
