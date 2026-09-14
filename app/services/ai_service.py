@@ -18,21 +18,38 @@ class AISearchService:
     last_error = ""  # 最近一次识别失败的详细原因
 
     @staticmethod
-    def _parse_error_message(resp_text: str) -> str:
-        """解析 AI 服务返回的错误，转成用户友好的中文提示"""
+    def _parse_deepseek_error(resp_text: str) -> str:
+        """解析 DeepSeek 错误，返回带充值链接的提示"""
         try:
             import json
             data = json.loads(resp_text)
             err = data.get("error", {})
             code = err.get("code", "")
             msg = err.get("message", "")
-            if "Arrearage" in code or "overdue" in msg or "欠费" in msg:
-                return "Qwen-VL余额不足，请充值后重试：https://usercenter2.aliyun.com/home"
-            if "invalid" in msg.lower() or "Authentication" in code:
-                return "API Key 无效，请检查 DeepSeek/阿里云密钥配置"
-            return msg or "AI服务调用失败"
+            if "Arrearage" in code or "overdue" in msg or "余额" in msg or "insufficient" in msg.lower():
+                return "DeepSeek余额不足，请充值：https://platform.deepseek.com/top_up"
+            if "invalid" in msg.lower() or "Authentication" in code or "auth" in msg.lower():
+                return "DeepSeek API Key 无效，请检查配置：https://platform.deepseek.com"
+            return f"DeepSeek服务异常：{msg or '未知错误'}"
         except Exception:
-            return resp_text[:200]
+            return f"DeepSeek服务异常：{resp_text[:200]}"
+
+    @staticmethod
+    def _parse_qwen_error(resp_text: str) -> str:
+        """解析阿里云 Qwen-VL 错误，返回带充值链接的提示"""
+        try:
+            import json
+            data = json.loads(resp_text)
+            err = data.get("error", {})
+            code = err.get("code", "")
+            msg = err.get("message", "")
+            if "Arrearage" in code or "overdue" in msg or "欠费" in msg or "余额" in msg:
+                return "Qwen-VL（阿里云）余额不足，请充值：https://usercenter2.aliyun.com/home"
+            if "invalid" in msg.lower() or "Authentication" in code:
+                return "Qwen-VL（阿里云）API Key 无效，请检查：https://dashscope.console.aliyun.com"
+            return f"Qwen-VL（阿里云）服务异常：{msg or '未知错误'}"
+        except Exception:
+            return f"Qwen-VL（阿里云）服务异常：{resp_text[:200]}"
 
     @staticmethod
     def _call_deepseek(system_prompt: str, user_prompt: str, image_data: Optional[str] = None, max_tokens: int = 300, timeout: int = 30) -> Optional[str]:
@@ -79,7 +96,7 @@ class AISearchService:
             return None
         except httpx.HTTPStatusError as e:
             logger.error(f"AI搜索HTTP错误: {e.response.status_code} {e.response.text[:200]}")
-            AISearchService.last_error = AISearchService._parse_error_message(e.response.text)
+            AISearchService.last_error = AISearchService._parse_deepseek_error(e.response.text)
             return None
         except Exception as e:
             logger.error(f"AI搜索异常: {str(e)}")
@@ -144,7 +161,7 @@ class AISearchService:
                 ]}
                 r = httpx.post(QWEN_API_URL, headers=h, json=p, timeout=30)
                 if r.status_code != 200:
-                    AISearchService.last_error = AISearchService._parse_error_message(r.text)
+                    AISearchService.last_error = AISearchService._parse_qwen_error(r.text)
                 r.raise_for_status()
                 txt = r.json().get("choices", [{}])[0].get("message", {}).get("content", "").strip()
                 if txt:
