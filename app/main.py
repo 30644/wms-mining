@@ -158,17 +158,6 @@ except Exception as e:
     logger.warning(f"数据库迁移检查异常（可忽略）: {str(e)}")
 
 
-@app.get("/", summary="健康检查")
-async def read_root():
-    """
-    应用根路由 - 健康检查
-    """
-    return {
-        "message": "欢迎使用大红柳滩矿区智能仓储管理系统",
-        "status": "运行中"
-    }
-
-
 @app.on_event("startup")
 async def startup_event():
     """
@@ -198,6 +187,30 @@ async def shutdown_event():
     logger.info("应用已关闭")
     logger.info("=" * 60)
 
+
+
+
+# ====== 前端静态文件服务 ======
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+import os
+
+_static_dir = os.path.join(os.path.dirname(__file__), "..", "static")
+if os.path.exists(_static_dir):
+    for _sub in ["js", "css", "img", "fonts"]:
+        _sub_path = os.path.join(_static_dir, _sub)
+        if os.path.exists(_sub_path):
+            app.mount(f"/{_sub}", StaticFiles(directory=_sub_path), name=f"static_{_sub}")
+
+    @app.get("/{full_path:path}", include_in_schema=False)
+    async def serve_spa(full_path: str):
+        if full_path.startswith("api/") or full_path.startswith("docs") or full_path.startswith("openapi"):
+            from fastapi import HTTPException
+            raise HTTPException(status_code=404, detail="Not Found")
+        _file_path = os.path.join(_static_dir, full_path)
+        if os.path.isfile(_file_path):
+            return FileResponse(_file_path)
+        return FileResponse(os.path.join(_static_dir, "index.html"))
 
 if __name__ == "__main__":
     import uvicorn
