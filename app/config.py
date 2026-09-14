@@ -108,7 +108,7 @@ INVENTORY_LOCK_TIMEOUT = int(os.getenv("INVENTORY_LOCK_TIMEOUT", "10"))  # 库�
 INVENTORY_CHECK_INTERVAL = int(os.getenv("INVENTORY_CHECK_INTERVAL", "3600"))  # 库存一致性检查间隔（秒）
 
 # ========== AI智能搜索配置 ==========
-AI_API_KEY = "sk-b05cceeb84dc4d3593c53a5f33eda04b"
+AI_API_KEY = "sk-f50276af4fc24e0d969b9d206ccbd43a"
 AI_API_URL = "https://api.deepseek.com/chat/completions"
 AI_MODEL = "deepseek-chat"
 

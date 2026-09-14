@@ -27,7 +27,7 @@ class AISearchService:
             code = err.get("code", "")
             msg = err.get("message", "")
             if "Arrearage" in code or "overdue" in msg or "欠费" in msg:
-                return "阿里云账户欠费，请充值后重试（https://usercenter2.aliyun.com/home）"
+                return "Qwen-VL余额不足，请充值后重试：https://usercenter2.aliyun.com/home"
             if "invalid" in msg.lower() or "Authentication" in code:
                 return "API Key 无效，请检查 DeepSeek/阿里云密钥配置"
             return msg or "AI服务调用失败"
