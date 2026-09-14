@@ -342,7 +342,7 @@ async def image_search_materials(
             keywords = [identified_name] if identified_name else []
 
         if not keywords:
-            raise HTTPException(status_code=400, detail="AI识别失败，请重试或使用文字搜索")
+            raise HTTPException(status_code=400, detail="AI找货失败：视觉识别服务不可用（请检查阿里云Qwen账户余额和DeepSeek API Key）")
 
         # 用第一个关键词搜索
         materials, total = MaterialService.get_material_list(
