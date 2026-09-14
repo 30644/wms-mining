@@ -20,36 +20,12 @@ class AISearchService:
     @staticmethod
     def _parse_deepseek_error(resp_text: str) -> str:
         """解析 DeepSeek 错误，返回带充值链接的提示"""
-        try:
-            import json
-            data = json.loads(resp_text)
-            err = data.get("error", {})
-            code = err.get("code", "")
-            msg = err.get("message", "")
-            if "Arrearage" in code or "overdue" in msg or "余额" in msg or "insufficient" in msg.lower():
-                return "DeepSeek余额不足，请充值：https://platform.deepseek.com/top_up"
-            if "invalid" in msg.lower() or "Authentication" in code or "auth" in msg.lower():
-                return "DeepSeek API Key 无效，请检查配置：https://platform.deepseek.com"
-            return f"DeepSeek服务异常：{msg or '未知错误'}"
-        except Exception:
-            return f"DeepSeek服务异常：{resp_text[:200]}"
+        return "DeepSeek余额不足，请检查：https://platform.deepseek.com"
 
     @staticmethod
     def _parse_qwen_error(resp_text: str) -> str:
         """解析阿里云 Qwen-VL 错误，返回带充值链接的提示"""
-        try:
-            import json
-            data = json.loads(resp_text)
-            err = data.get("error", {})
-            code = err.get("code", "")
-            msg = err.get("message", "")
-            if "Arrearage" in code or "overdue" in msg or "欠费" in msg or "余额" in msg:
-                return "Qwen-VL（阿里云）余额不足，请充值：https://usercenter2.aliyun.com/home"
-            if "invalid" in msg.lower() or "Authentication" in code:
-                return "Qwen-VL（阿里云）API Key 无效，请检查：https://dashscope.console.aliyun.com"
-            return f"Qwen-VL（阿里云）服务异常：{msg or '未知错误'}"
-        except Exception:
-            return f"Qwen-VL（阿里云）服务异常：{resp_text[:200]}"
+        return "阿里千问(Qwen-VL)余额不足，请检查：https://bailian.console.aliyun.com"
 
     @staticmethod
     def _call_deepseek(system_prompt: str, user_prompt: str, image_data: Optional[str] = None, max_tokens: int = 300, timeout: int = 30) -> Optional[str]:
@@ -169,8 +145,8 @@ class AISearchService:
                     if kw: logger.info(f"Qwen-VL: {kw}"); return kw
             except Exception as e:
                 logger.warning(f"Qwen-VL 不可用: {str(e)[:80]}")
-        # 回退：增强像素分析
-        return AISearchService._infer_keywords_from_pixels(image_b64)
+        # 识图只用 Qwen-VL，失败不再回退 DeepSeek
+        return None
 
     @staticmethod
     def _infer_keywords_from_pixels(image_b64: str) -> Optional[List[str]]:

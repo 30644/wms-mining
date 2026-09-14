@@ -341,15 +341,12 @@ async def image_search_materials(
         else:
             raise HTTPException(status_code=400, detail="请上传图片文件")
 
-        # AI识别关键词（最多5个）
+        # AI识别关键词（最多5个）— 只用 Qwen-VL
         keywords = AISearchService.identify_keywords_from_image(image_b64)
-        if not keywords:
-            identified_name = AISearchService.identify_material_from_image(image_bytes)
-            keywords = [identified_name] if identified_name else []
 
         if not keywords:
             reason = AISearchService.last_error or "视觉识别服务不可用"
-            raise HTTPException(status_code=400, detail=f"AI找货失败：{reason}")
+            raise HTTPException(status_code=400, detail=f"AI识图找货失败：{reason}")
 
         # 用第一个关键词搜索
         materials, total = MaterialService.get_material_list(
